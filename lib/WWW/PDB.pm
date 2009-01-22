@@ -63,7 +63,7 @@ use constant {
 };
 
 our @ISA = qw(Exporter);
-our $VERSION = '0.00_02';
+our $VERSION = '0.00_03';
 $VERSION = eval $VERSION;
 
 our %EXPORT_TAGS = (
@@ -221,7 +221,7 @@ sub get_status {
     return 'UNKNOWN' if length($_[1]) != 4;
     my $class = shift;
     my $pdbid = _to_string(shift);
-    my $ret   = $self->_call(
+    my $ret   = $class->_call(
         'getIdStatus', $pdbid
     );
     return $ret;
@@ -251,9 +251,9 @@ sub is_obsolete {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self  = shift;
-    my $pdbid = _to_string(shift);
-    my $ret   = $self->_call(
+    my $class  = shift;
+    my $pdbid  = _to_string(shift);
+    my $ret    = $class->_call(
         'isStructureIdObsolete', $pdbid
     );
     return $ret;
@@ -320,43 +320,43 @@ the BLAST program. XML is used if the output format is unspecified.
 =cut
 
 sub _blast_pdb {
-    my($self, $sequence, $cutoff, $matrix, $output_format) = 
+    my($class, $sequence, $cutoff, $matrix, $output_format) = 
         _wrap(\@_ => [SELF, STRING, DOUBLE, STRING, STRING]);
 
-    my $ret = $self->_call(
+    my $ret = $class->_call(
         'blastPDB', $sequence, $cutoff, $matrix, $output_format
     );
     return $ret;
 }
 
 sub _blast_structure_id_pdb {
-    my $self = shift;
+    my $class = shift;
 
     # I keep getting "ERROR: No Results Found" using the PDB's 5 argument
     # form of blastPDB. Here's a workaround:    
-    my $seq = $self->get_sequence(shift, shift);
-    return $self->blast($seq, @_);
+    my $seq = $class->get_sequence(shift, shift);
+    return $class->blast($seq, @_);
 
-#   my($self, $pdbid, $chainid, $cutoff, $matrix, $output_format) =
+#   my($class, $pdbid, $chainid, $cutoff, $matrix, $output_format) =
 #       _wrap(\@_ => [SELF, STRING, STRING, DOUBLE, STRING, STRING]);
-#   my $ret = $self->_call(
+#   my $ret = $class->_call(
 #       'blastPDB', $pdbid, $chainid, $cutoff, $matrix, $output_format
 #   );
 #   return $ret;
 }
 
 sub _blast_query_xml {
-    my($self, $sequence, $cutoff) = _wrap(\@_ => [SELF, STRING, DOUBLE]);
-    my $ret      = $self->_call(
+    my($class, $sequence, $cutoff) = _wrap(\@_ => [SELF, STRING, DOUBLE]);
+    my $ret = $class->_call(
         'blastQueryXml', $sequence, $cutoff
     );
     return $ret;
 }
 
 sub _blast_structure_id_query_xml {
-    my($self, $pdbid, $chainid, $cutoff)
+    my($class, $pdbid, $chainid, $cutoff)
         = _wrap(\@_ => [SELF, STRING, STRING, DOUBLE]);
-    my $ret     = $self->_call(
+    my $ret = $class->_call(
         'blastStructureIdQueryXml', $pdbid, $chainid, $cutoff
     );
     return $ret;
@@ -366,13 +366,13 @@ sub blast {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self = shift;
+    my $class = shift;
     my $ret;
     my $c = scalar(@_);
-    if   ($c == 4) { $ret = $self->_blast_pdb(@_) }
-    elsif($c == 5) { $ret = $self->_blast_structure_id_pdb(@_) }
-    elsif($c == 2) { $ret = $self->_blast_query_xml(@_) }
-    elsif($c == 3) { $ret = $self->_blast_structure_id_query_xml(@_) }
+    if   ($c == 4) { $ret = $class->_blast_pdb(@_) }
+    elsif($c == 5) { $ret = $class->_blast_structure_id_pdb(@_) }
+    elsif($c == 2) { $ret = $class->_blast_query_xml(@_) }
+    elsif($c == 3) { $ret = $class->_blast_structure_id_query_xml(@_) }
     else { confess 'Called blast with unexpected number of arguments' }
     return $ret;
 }
@@ -392,19 +392,19 @@ FASTA C<cutoff>:
 =cut
 
 sub _fasta_query {
-    my $self     = shift;
+    my $class    = shift;
     my $sequence = _to_string(shift);
     my $cutoff   = _to_double(shift);
-    my $ret      = $self->_call(
+    my $ret      = $class->_call(
         'fastaQuery', $sequence, $cutoff
     );
     return $ret;
 }
 
 sub _fasta_structure_id_query {
-    my($self, $pdbid, $chainid, $cutoff)
+    my($class, $pdbid, $chainid, $cutoff)
         = _wrap(\@_ => [SELF, STRING, STRING, DOUBLE]);
-    my $ret = $self->_call(
+    my $ret = $class->_call(
         'fastaStructureIdQuery', $pdbid, $chainid, $cutoff
     );
     return $ret;
@@ -414,11 +414,11 @@ sub fasta {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self = shift;
-    my $c    = scalar(@_);
+    my $class = shift;
+    my $c     = scalar(@_);
     my $ret;
-    if   ($c == 2) { $ret = $self->_fasta_query(@_) }
-    elsif($c == 3) { $ret = $self->_fasta_structure_id_query(@_) }
+    if   ($c == 2) { $ret = $class->_fasta_query(@_) }
+    elsif($c == 3) { $ret = $class->_fasta_structure_id_query(@_) }
     else { confess 'Called fasta with unexpected number of arguments' }
     $_ = bless(\"$_", 'WWW::PDB::_FastaResult') for @$ret;
     return wantarray ? @$ret : $ret;
@@ -434,10 +434,10 @@ sub get_chain_length {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self    = shift;
+    my $class   = shift;
     my $pdbid   = _to_string(shift);
     my $chainid = _to_string(shift);
-    my $ret     = $self->_call(
+    my $ret     = $class->_call(
         'getChainLength', $pdbid, $chainid
     );
     return $ret;
@@ -454,9 +454,9 @@ sub get_chains {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self  = shift;
+    my $class = shift;
     my $pdbid = _to_string(shift);
-    my $ret   = $self->_call(
+    my $ret   = $class->_call(
         'getChains', $pdbid
     );
     return wantarray ? @$ret : $ret;
@@ -473,10 +473,10 @@ sub get_cif_chain {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self    = shift;
+    my $class   = shift;
     my $pdbid   = _to_string(shift);
     my $chainid = _to_string(shift);
-    my $ret     = $self->_call(
+    my $ret     = $class->_call(
         'getCifChain', $pdbid, $chainid
     );
     return $ret;
@@ -493,10 +493,10 @@ sub get_cif_chain_length {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self    = shift;
+    my $class   = shift;
     my $pdbid   = _to_string(shift);
     my $chainid = _to_string(shift);
-    my $ret     = $self->_call(
+    my $ret     = $class->_call(
         'getCifChainLength', $pdbid, $chainid
     );
     return $ret;
@@ -513,9 +513,9 @@ sub get_cif_chains {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self  = shift;
+    my $class = shift;
     my $pdbid = _to_string(shift);
-    my $ret   = $self->_call(
+    my $ret   = $class->_call(
         'getCifChains', $pdbid
     );
     return wantarray ? @$ret : $ret;
@@ -532,11 +532,11 @@ sub get_cif_residue {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self      = shift;
+    my $class     = shift;
     my $pdbid     = _to_string(shift);
     my $chainid   = _to_string(shift);
     my $residueid = _to_string(shift);
-    my $ret       = $self->_call(
+    my $ret       = $class->_call(
         'getCifResidue', $pdbid, $chainid, $residueid
     );
     return $ret;
@@ -554,8 +554,8 @@ sub get_current_pdbids {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self = shift;
-    my $ret  = $self->_call(
+    my $class = shift;
+    my $ret  = $class->_call(
         'getCurrentPdbIds'
     );
     return wantarray ? @$ret : $ret;
@@ -574,16 +574,16 @@ sub get_ec_nums {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self = shift;
+    my $class = shift;
     my $ret;
     if(@_) {
         my @pdbids = map(_to_string($_), map { ref($_) ? @$_ : $_ } @_);
-        $ret = $self->_call(
+        $ret = $class->_call(
             'getEcNumsForStructures', \@pdbids
         );
     }
     else {
-    	$ret = $self->_call(
+    	$ret = $class->_call(
     	    'getEcNums'
     	);
     }
@@ -602,9 +602,9 @@ sub get_entities {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self  = shift;
+    my $class = shift;
     my $pdbid = _to_string(shift);
-    my $ret   = $self->_call(
+    my $ret   = $class->_call(
         'getEntities', $pdbid
     );
     return $ret && wantarray ? @$ret : $ret;
@@ -620,8 +620,8 @@ sub get_genome_details {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self = shift;
-    my $ret  = $self->_call(
+    my $class = shift;
+    my $ret  = $class->_call(
         'getGenomeDetails'
     );
     return $ret && wantarray ? @$ret : $ret;
@@ -637,10 +637,10 @@ sub get_kabsch_sander {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self    = shift;
+    my $class   = shift;
     my $pdbid   = _to_string(shift);
     my $chainid = _to_string(shift);
-    my $ret     = $self->_call(
+    my $ret     = $class->_call(
         'getKabschSander', $pdbid, $chainid
     );
     return $ret;
@@ -657,8 +657,7 @@ sub get_obsolete_pdbids {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self = shift;
-    my $ret  = $self->_call(
+    my $ret   = shift->_call(
         'getObsoletePdbIds'
     );
     return $ret && wantarray ? @$ret : $ret;
@@ -675,9 +674,9 @@ sub get_primary_citation_title {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self  = shift;
+    my $class = shift;
     my $pdbid = _to_string(shift);
-    my $ret   = $self->_call(
+    my $ret   = $class->_call(
         'getPrimaryCitationTitle', $pdbid
     );
     return $ret;
@@ -693,8 +692,7 @@ sub get_pubmed_ids {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self = shift;
-    my $ret  = $self->_call(
+    my $ret = shift->_call(
         'getPubmedIdForAllStructures'
     );
     return $ret && wantarray ? @$ret : $ret;
@@ -710,9 +708,9 @@ sub get_pubmed_id {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self  = shift;
+    my $class = shift;
     my $pdbid = _to_string(shift);
-    my $ret   = $self->_call(
+    my $ret   = $class->_call(
         'getPubmedIdForStructure', $pdbid
     );
     return $ret;
@@ -728,9 +726,9 @@ sub get_release_dates {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self   = shift;
+    my $class  = shift;
     my @pdbids = map(_to_string($_), map { ref($_) ? @$_ : $_ } @_);
-    my $ret    = $self->_call(
+    my $ret    = $class->_call(
         'getReleaseDates', \@pdbids
     );
     return $ret && wantarray ? @$ret : $ret;
@@ -746,10 +744,10 @@ sub get_sequence {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self    = shift;
+    my $class   = shift;
     my $pdbid   = _to_string(shift);
     my $chainid = _to_string(shift);
-    my $ret = $self->_call(
+    my $ret = $class->_call(
         'getSequenceForStructureAndChain', $pdbid, $chainid
     );
     return $ret;
@@ -766,9 +764,9 @@ sub get_space_group {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self  = shift;
+    my $class = shift;
     my $pdbid = _to_string(shift);
-    my $ret   = $self->_call(
+    my $ret   = $class->_call(
         'getSpaceGroupForStructure', $pdbid
     );
     return $ret;
@@ -784,10 +782,10 @@ sub homology_reduction_query {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self   = shift;
+    my $class  = shift;
     my $cutoff = _to_int(int(pop));
     my @pdbids = map(_to_string($_), map { ref($_) ? @$_ : $_ } @_);
-    my $ret    = $self->_call(
+    my $ret    = $class->_call(
         'homologyReductionQuery', \@pdbids, $cutoff
     );
     return $ret && wantarray ? @$ret : $ret;
@@ -806,11 +804,11 @@ sub keyword_query {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self         = shift;
+    my $class        = shift;
     my $keyword      = _to_string(shift);
-    my $exact_match  = _to_boolean(shift || 0);
-    my $authors_only = _to_boolean(shift || 0);
-    my $ret          = $self->_call(
+    my $exact_match  = _to_boolean(shift);
+    my $authors_only = _to_boolean(shift);
+    my $ret          = $class->_call(
         'keywordQuery', $keyword, $exact_match, $authors_only
     );
     return $ret && wantarray ? @$ret : $ret;
@@ -827,9 +825,9 @@ sub pubmed_abstract_query {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self    = shift;
+    my $class   = shift;
     my $keyword = _to_string(shift);
-    my $ret     = $self->_call(
+    my $ret     = $class->_call(
         'pubmedAbstractQuery', $keyword
     );
     return $ret && wantarray ? @$ret : $ret;
@@ -855,9 +853,9 @@ sub get_annotations {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self       = shift;
+    my $class      = shift;
     my $state_file = _to_string(shift);
-    my $ret        = $self->_call(
+    my $ret        = $class->_call(
         'getAnnotations', $state_file
     );
     return $ret;
@@ -873,9 +871,9 @@ sub get_atom_site {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self  = shift;
+    my $class = shift;
     my $pdbid = _to_string(shift);
-    my $ret   = $self->_call(
+    my $ret   = $class->_call(
         'getAtomSite', $pdbid
     );
     return $ret;
@@ -891,9 +889,9 @@ sub get_atom_sites {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self  = shift;
+    my $class = shift;
     my $pdbid = _to_string(shift);
-    my $ret   = $self->_call(
+    my $ret   = $class->_call(
         'getAtomSites', $pdbid
     );
     return $ret;
@@ -909,11 +907,11 @@ sub get_domain_fragments {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self    = shift;
+    my $class   = shift;
     my $pdbid   = _to_string(shift);
     my $chainid = _to_string(shift);
     my $method  = _to_string(shift);
-    my $ret = $self->_call(
+    my $ret = $class->_call(
         'getDomainFragments', $pdbid, $chainid, $method
     );
     return $ret && wantarray ? @$ret : $ret;
@@ -929,9 +927,9 @@ sub get_first_struct_conf {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self  = shift;
+    my $class = shift;
     my $pdbid = _to_string(shift);
-    my $ret   = $self->_call(
+    my $ret   = $class->_call(
         'getFirstStructConf', $pdbid
     );
     return $ret;
@@ -947,9 +945,9 @@ sub get_first_struct_sheet_range {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self  = shift;
+    my $class = shift;
     my $pdbid = _to_string(shift);
-    my $ret   = $self->_call(
+    my $ret   = $class->_call(
         'getFirstStructSheetRange', $pdbid
     );
     return $ret;
@@ -965,9 +963,9 @@ sub get_struct_confs {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self  = shift;
+    my $class = shift;
     my $pdbid = _to_string(shift);
-    my $ret   = $self->_call(
+    my $ret   = $class->_call(
         'getStructConfs', $pdbid
     );
     return $ret;
@@ -983,8 +981,8 @@ sub get_struct_sheet_ranges {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my($self, $pdbid) = _wrap(\@_ => [SELF, STRING]);
-    my $ret   = $self->_call(
+    my($class, $pdbid) = _wrap(\@_ => [SELF, STRING]);
+    my $ret = $class->_call(
         'getStructSheetRanges', $pdbid
     );
     return $ret;
@@ -1000,8 +998,8 @@ sub get_structural_genomics_pdbids {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my $self = _wrap(\@_ => [SELF]);
-    my $ret  = $self->_call(
+    my $class = _wrap(\@_ => [SELF]);
+    my $ret   = $class->_call(
         'getStructureGenomicsPdbIds'
     );
     return $ret && wantarray ? @$ret : $ret;
@@ -1017,8 +1015,8 @@ sub xml_query {
     unshift @_, __PACKAGE__ # add the package name unless already there
         unless defined($_[0]) && UNIVERSAL::isa($_[0], __PACKAGE__);
 
-    my($self, $xml) = _wrap(\@_ => [SELF, STRING]);
-    my $ret  = $self->_call(
+    my($class, $xml) = _wrap(\@_ => [SELF, STRING]);
+    my $ret  = $class->_call(
         'xmlQuery', $xml
     );
     return $ret && wantarray ? @$ret : $ret;
@@ -1031,23 +1029,23 @@ sub xml_query {
 ################################################################################
 
 sub _get_file {
-    my($self, @dir) = @_;
-    my $file        = pop @dir;
+    my($class, @dir) = @_;
+    my $file         = pop @dir;
     my($dir, $local_path, $store, $fh);
-    if($self->cache) {
-        $dir        = File::Spec->catfile($self->cache, @dir);
+    if($class->cache) {
+        $dir        = File::Spec->catfile($class->cache, @dir);
         $local_path = File::Spec->catfile($dir, $file);
     }
-    unless($self->cache && ($store = new IO::File($local_path))) {
+    unless($class->cache && ($store = new IO::File($local_path))) {
         my $ftp;
-        if(   ($ftp = new Net::FTP($self->ftp, Debug => 0)) # connect
-            && $ftp->login(qw(anonymous -anonymous@))       # login
-            && $ftp->cwd(join('', map("/$_", @dir)))        # chdir
+        if(   ($ftp = new Net::FTP($class->ftp, Debug => 0)) # connect
+            && $ftp->login(qw(anonymous -anonymous@))        # login
+            && $ftp->cwd(join('', map("/$_", @dir)))         # chdir
         ) {
             # store in temporary file unless there's a cache
-            $store = IO::File->new_tmpfile unless $self->cache # cache exists
-                && File::Path::mkpath($dir)                    # mkdir
-                && ($store = new IO::File($local_path, '+>')); # create file
+            $store = IO::File->new_tmpfile unless $class->cache # cache exists
+                && File::Path::mkpath($dir)                     # mkdir
+                && ($store = new IO::File($local_path, '+>'));  # create file
             
             # seek to start if successful get otherwise delete file
             if($ftp->get($file => $store)) {
@@ -1055,7 +1053,7 @@ sub _get_file {
             }
             else {
                 undef $store;
-                $self->cache and unlink $local_path;
+                $class->cache and unlink $local_path;
             }
             
             # clean up
@@ -1075,8 +1073,7 @@ sub _get_file {
 }
 
 sub _call {
-    my $self   = shift;
-    my $result = $self->soap->call(@_);
+    my $result = shift->soap->call(@_);
     confess $result->faultstring if $result->fault;
     return $result->result;
 }

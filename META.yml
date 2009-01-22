@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               WWW-PDB
-version:            0.00_02
+version:            0.00_03
 abstract:           Perl interface to the Protein Data Bank
 author:
     - Miorel-Lucian Palii <mlpalii@gmail.com>
