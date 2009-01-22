@@ -1,5 +1,5 @@
-PDB version 0.00_01
-===================
+WWW::PDB version 0.00_02
+========================
 
 The Protein Data Bank (PDB) was established in 1971 as a repository of the
 atomic coordinates of protein structures (Bernstein et al., 1997), but it
@@ -24,6 +24,7 @@ DEPENDENCIES
 This module requires these other modules:
 
   Carp
+  Exporter
   Fcntl
   File::Path
   File::Spec

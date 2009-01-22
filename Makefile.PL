@@ -1,4 +1,4 @@
-use 5.008;
+use 5.006;
 use ExtUtils::MakeMaker;
 
 WriteMakefile(
@@ -7,13 +7,14 @@ WriteMakefile(
     LICENSE           => 'perl',
     PREREQ_PM         => {
                              Carp                   => 0,
+                             Exporter               => 0,
                              Fcntl                  => 0,
-                             File::Path             => '1.08',
-                             File::Spec             => '3.12',
-                             IO::File               => '1.13',
-                             IO::Uncompress::Gunzip => '2.015',
-                             Net::FTP               => '2.77',
-                             SOAP::Lite             => '0.710.08',
+                             File::Path             => 0,
+                             File::Spec             => 0,
+                             IO::File               => 0,
+                             IO::Uncompress::Gunzip => 0,
+                             Net::FTP               => 0,
+                             SOAP::Lite             => 0,
                          },
     ($] >= 5.005 ?
       (ABSTRACT_FROM  => 'lib/WWW/PDB.pm',

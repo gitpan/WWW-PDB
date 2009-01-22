@@ -1,5 +1,13 @@
-Revision history for Perl extension PDB.
+Revision history for WWW::PDB
+=============================
+
+January 21, 2009
+----------------
+ * tweaked the interface and implementation, still very rough and not
+   appropriate for production code
+ * relaxed dependencies a bit, let's see if it breaks tests
+ * released version 0.00_02
 
 December 19, 2008
-=================
-* original version created by h2xs 1.23
+-----------------
+ * original version created by h2xs 1.23
